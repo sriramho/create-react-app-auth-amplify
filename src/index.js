@@ -1,12 +1,33 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import './index.css';
-import App from './App';
-import * as serviceWorker from './serviceWorker';
+import Hls from 'hls.js';
+let player = document.querySelector('#player');
+let button = document.querySelector('#button');
 
-ReactDOM.render(<App />, document.getElementById('root'));
+const play = function(){
+  console.log('event',button.innerHTML);
+  if(button.innerHTML === 'Play'){
+      player.play();
+      button.innerHTML = "Pause";
+  }else{
+    
+      player.pause();
+      button.innerHTML = "Play";
+  }
+};
+console.log(Hls.Events.ERROR);
+if(Hls.isSupported()) {
+    button.innerHTML = 'Loading';
+    var hls = new Hls();
+    hls.loadSource('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+    hls.attachMedia(player);
+    hls.on(Hls.Events.MANIFEST_PARSED,function() {
+      button.innerHTML = 'Playingfromjsfile';
+      button.addEventListener('click',play);
+  });
+  hls.on(Hls.Events.ERROR,function(err){
+    console.log(err)
+  })
+ }else{
+   button.innerHTML = 'Not Supported';
+ }
 
-// If you want your app to work offline and load faster, you can change
-// unregister() to register() below. Note this comes with some pitfalls.
-// Learn more about service workers: http://bit.ly/CRA-PWA
-serviceWorker.unregister();
+//player.play();
