@@ -1,40 +1,124 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <link rel="shortcut icon" href="%PUBLIC_URL%/favicon.ico">
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="theme-color" content="#000000">
-    <!--
-      manifest.json provides metadata used when your web app is added to the
-      homescreen on Android. See https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/
-    -->
-    <link rel="manifest" href="%PUBLIC_URL%/manifest.json">
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
+<!doctype html>
 
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
-  </head>
-  <body>
-    <noscript>
-      You need to enable JavaScript to run this app.
-    </noscript>
-    <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
+<head>
+	<style>
+		div {
+			padding: 16px;
+			background-color: #179b77;
+		}
+	</style>
 
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
+	<script src="https://sdk.amazonaws.com/js/aws-sdk-2.357.0.min.js"></script>
+	<script type="text/javascript" src="https://code.jquery.com/jquery-3.2.1.min.js"></script>
+	<script type="text/javascript">
+		//Bucket Configurations
 
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
-  </body>
+ var bucketName = 'vod-demo-source-12ruaxwvopm296';
+ var bucketRegion = 'us-west-2';
+ var IdentityPoolId = 'us-west-2:89f8b0d3-ae53-492a-9163-c7355a4f1152';
+
+ AWS.config.update({
+                region: bucketRegion,
+                credentials: new AWS.CognitoIdentityCredentials({
+                IdentityPoolId: IdentityPoolId
+                })
+            });
+
+            var s3 = new AWS.S3({
+                apiVersion: '2006-03-01',
+                params: {Bucket: bucketName}
+        });
+	</script>
+	<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+	<video id="video"></video>
+	<script>
+    import Hls from 'hls.js';
+    let player = document.querySelector('#player');
+    let button = document.querySelector('#button');
+
+    const play = function(){
+      console.log('event',button.innerHTML);
+      if(button.innerHTML === 'Play'){
+          player.play();
+          button.innerHTML = "Pause";
+      }else{
+        
+          player.pause();
+          button.innerHTML = "Play";
+      }
+    };
+    console.log(Hls.Events.ERROR);
+    if(Hls.isSupported()) {
+        button.innerHTML = 'Loading';
+        var hls = new Hls();
+        hls.loadSource('https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8');
+        hls.attachMedia(player);
+        hls.on(Hls.Events.MANIFEST_PARSED,function() {
+          button.innerHTML = 'Play';
+          button.addEventListener('click',play);
+      });
+      hls.on(Hls.Events.ERROR,function(err){
+        console.log(err)
+      })
+    }else{
+      button.innerHTML = 'Not Supported';
+    }
+
+	</script>
+
+</head>
+
+<body>
+
+
+	<!-- A functional html code-->
+	<div>
+		<input type="file" id="fileUpload">
+    </div>
+
+		<div>
+			<button onclick="s3upload()">Share your video to Stream</button>
+		</div>
+
+		<progress max=”100” value=”0”></progress>
+
+		<script type="text/javascript">
+			function s3upload() {  
+                var files = document.getElementById('fileUpload').files;
+                if (files) 
+                {
+                    var file = files[0];
+                    var fileName = file.name;
+                    var filePath = 'vod-demo-source-12ruaxwvopm29' + fileName;
+                    var fileUrl = 'https://' + 'vod-demo-source-12ruaxwvopm29' + 's3-us-west-2' + '.amazonaws.com/' +  fileName;
+            
+                    s3.upload({
+                                    Key: fileName,
+                                    Body: file,
+                                    Bucket: 'vod-demo-source-12ruaxwvopm29',
+                                }, function(err, data) {
+                                    if(err) {
+                                        reject('error');
+                                    }
+                                    
+                                    alert('Successfully Uploaded!');
+                                }).on('httpUploadProgress', function (progress) {
+                                    var uploaded = parseInt((progress.loaded * 100) / progress.total);
+                                    $("progress").attr('value', uploaded);
+                                });
+                }
+      };
+		</script>
+
+		<video id="player"></video>
+
+		<div class="card" style="width: 40rem; margin:auto; margin-top:20px">
+			<div class="card-body">
+				<h4 class="card-title">Stream your On-Demand Video</h4>
+				<a href="#" id="button" class="btn btn-primary">Initializing</a>
+			</div>
+		</div>
+</body>
+
 </html>
